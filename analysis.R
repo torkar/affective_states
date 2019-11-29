@@ -24,7 +24,7 @@ library(extraDistr)
 # g. EXP ratio-1-35 professional experience in programming (years, rounded down) 
 # h. ENTITIES ratio-2-13. Number of logical abstractions in the example 
 
-d <- read.csv("~/Documents/cth/Research Projects, Studies & Data/Jesper & Erik/data.csv")
+d <- read.csv("~/Documents/cth/Research Projects, Studies & Data/Jesper & Erik/affective_states/data.csv")
 
 dat <- list(
   V = d$V,
