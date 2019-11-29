@@ -1,2 +1,2 @@
 # affective_states
-Data and scripts for the paper on affective states
+Data and script for the paper on affective states
