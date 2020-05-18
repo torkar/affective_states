@@ -3,7 +3,6 @@ library(rethinking)
 library(dplyr)
 library(ggthemes)
 library(patchwork)
-library(egg)
 library(tidyr)
 library(extraDistr)
 
@@ -227,7 +226,8 @@ p1 <-  data.frame(x, y = dbeta(x, 1, 5)) %>%
   #      axis.text.x=element_blank(),
   #      axis.ticks.x=element_blank())
 
-ggarrange(p1,p3,p6, ncol=3)
+p1 + p3 + p6
+
 # So for each item \zeta in our simplex \alpha_0 the top right picture shows
 # that our prior is very broad. Only the top left is broader so to speak.
 # Using {2,2,2,2,2,2} is like using a very flat prior. We really don't have any
