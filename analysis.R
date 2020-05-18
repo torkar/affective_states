@@ -2,6 +2,7 @@ library(brms)
 library(rethinking)
 library(dplyr)
 library(ggthemes)
+library(patchwork)
 library(egg)
 library(tidyr)
 library(extraDistr)
@@ -24,7 +25,7 @@ library(extraDistr)
 # g. EXP ratio-1-35 professional experience in programming (years, rounded down) 
 # h. ENTITIES ratio-2-13. Number of logical abstractions in the example 
 
-d <- read.csv("~/Documents/cth/Research Projects, Studies & Data/Jesper & Erik/affective_states/data.csv")
+d <- read.csv("./data.csv")
 
 dat <- list(
   V = d$V,
@@ -332,11 +333,11 @@ summary(M) # Check ESS and \widehat{R}
 # posterior_predict()
 
 # Check model fit
-pp_check(M, resp = "A", nsamples = 50) + theme_tufte() + 
+pp_check(M, type = "bars", resp = "A", nsamples = 50) + theme_tufte() + 
   theme(legend.position = "none")
-pp_check(M, resp = "D", nsamples = 50) + theme_tufte() + 
+pp_check(M, type = "bars", resp = "D", nsamples = 50) + theme_tufte() + 
   theme(legend.position = "none")
-pp_check(M, resp = "V", nsamples = 50) + theme_tufte() + 
+pp_check(M, type = "bars", resp = "V", nsamples = 50) + theme_tufte() + 
   theme(legend.position = "none")
 
 plot(M) # Check chains etc. We're estimating 112 params so it's many plots...
@@ -534,14 +535,13 @@ p1 <- avg_resp(resp = "D",
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
   geom_line(alpha = 1 / 10, color = "black") +
   scale_x_continuous("outcome D", breaks = 0:1, labels = c(example[1], example[2])) +
-  scale_y_continuous("average response", breaks = 2:6) +
-  coord_cartesian(ylim = 2:6) +
-  theme_hc() +
-  theme(
-    legend.position = "none",
-    plot.subtitle = element_text(size = 10),
-    axis.title = element_text(size = 9)
-  ) 
+  scale_y_continuous("", limits=c(3,6)) +
+  theme_hc()# +
+  # theme(
+  #   legend.position = "none",
+  #   plot.subtitle = element_text(size = 10),
+  #   axis.title = element_text(size = 9)
+  # ) 
 
 example = c("BL", "BH")
 p2 <- avg_resp(resp = "V",
@@ -549,16 +549,16 @@ p2 <- avg_resp(resp = "V",
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
   geom_line(alpha = 1 / 10, color = "black") +
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
-  scale_y_continuous("", breaks = 2:6) +
-  coord_cartesian(ylim = 2:6) +
-  theme_hc() +
-  theme(
-    legend.position = "none",
-    plot.subtitle = element_text(size = 10),
-    axis.title = element_text(size = 9),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-  ) 
+  scale_y_continuous("", limits=c(3,6)) +
+  #coord_cartesian(ylim = 2:6) +
+  theme_hc()# +
+  # theme(
+  #   legend.position = "none",
+  #   plot.subtitle = element_text(size = 10),
+  #   axis.title = element_text(size = 9),
+  #   axis.text.y = element_blank(),
+  #   axis.ticks.y = element_blank()
+  # ) 
 
 example = c("DL", "DH")
 p3 <- avg_resp(resp = "V",
@@ -566,18 +566,19 @@ p3 <- avg_resp(resp = "V",
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
   geom_line(alpha = 1 / 10, color = "black") +
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
-  scale_y_continuous("", breaks = 2:6) +
-  coord_cartesian(ylim = 2:6) +
-  theme_hc() +
-  theme(
-    legend.position = "none",
-    plot.subtitle = element_text(size = 10),
-    axis.title = element_text(size = 9),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-  ) 
+  scale_y_continuous("", limits=c(3,6)) +
+  #coord_cartesian(ylim = 2:6) +
+  theme_hc()# +
+  # theme(
+  #   legend.position = "none",
+  #   plot.subtitle = element_text(size = 10),
+  #   axis.title = element_text(size = 9),
+  #   axis.text.y = element_blank(),
+  #   axis.ticks.y = element_blank()
+  # ) 
 
-grid.arrange(p1, p2, p3, ncol = 3)
+p1+p2+p3
+# grid.arrange(p1, p2, p3, ncol = 3)
 
 ################################################################################
 # Effect sizes 
@@ -594,6 +595,8 @@ grid.arrange(p1, p2, p3, ncol = 3)
 
 # posterior_predict bails when using a list() so change to df
 df <- as.data.frame(dat)
+df$EXAMPLE_idx <- as.factor(df$EXAMPLE_idx)
+df$EDU <- droplevels(df$EDU)
 
 # For level BH and BL check difference between them
 data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[4], ] # BL
