@@ -59,15 +59,15 @@ cum_pr_k_a <- cumsum(pr_k_a)
 cum_pr_k_d <- cumsum(pr_k_d)
 
 plot(1:9, cum_pr_k_v, type="b", xlab="response", 
-     ylab="cumulative proportion for V", ylim=c(0,1), bty="n", xaxt="n")
+     ylab="cumulative proportion for Emotions (V)", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
 plot(1:9, cum_pr_k_a, type="b", xlab="response", 
-     ylab="cumulative proportion for A", ylim=c(0,1), bty="n", xaxt="n")
+     ylab="cumulative proportion for Feelings (A)", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
 plot(1:9, cum_pr_k_d, type="b", xlab="response", 
-     ylab="cumulative proportion for D", ylim=c(0,1), bty="n", xaxt="n")
+     ylab="cumulative proportion for Moods (D)", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
 # log-cumulative-odds
@@ -76,15 +76,15 @@ lco_a <- logit_scaled(cum_pr_k_a)
 lco_d <- logit_scaled(cum_pr_k_d)
 
 plot(1:9, lco_v, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for V", 
-     ylab="log-cumulative-odds for V", xaxt="n", bty = "n")
+     ylab="log-cumulative-odds for Emotions (V)", xaxt="n", bty = "n")
 axis(1, seq(1,9,1))
 
 plot(1:9, lco_a, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for A", 
-     ylab="log-cumulative-odds for A", xaxt="n", bty = "n")
+     ylab="log-cumulative-odds for Feelings (A)", xaxt="n", bty = "n")
 axis(1, seq(1,9,1))
 
 plot(1:9, lco_d, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for D", 
-     ylab="log-cumulative-odds for D", xaxt="n", bty = "n")
+     ylab="log-cumulative-odds for Moods (D)", xaxt="n", bty = "n")
 axis(1, seq(1,9,1))
 
 # So now we have a feeling for the response variable.
