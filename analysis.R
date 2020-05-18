@@ -513,7 +513,7 @@ avg_resp <- function(resp, example){
 #
 # Now let's use our function above to plot the *average* response for the 
 # combinations above that had strong evidence, i.e., 
-# As brefore, some things to look at perhaps (95% uncertainty interval):
+# As before, some things to look at perhaps (95% uncertainty interval):
 # D_EXAMPLE_idxBL       -1.44    -0.11
 # V_EXAMPLE_idxBH        0.06     1.41
 # V_EXAMPLE_idxDL       -1.52    -0.15
@@ -538,12 +538,12 @@ p1 <- avg_resp(resp = "D",
   geom_line(alpha = 1 / 10, color = "black") +
   scale_x_continuous("outcome D", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
-  theme_hc()# +
-  # theme(
+  theme_hc() +
+  theme(
   #   legend.position = "none",
-  #   plot.subtitle = element_text(size = 10),
-  #   axis.title = element_text(size = 9)
-  # ) 
+  plot.subtitle = element_text(size = 10),
+  axis.title = element_text(size = 9)
+  ) 
 
 example = c("BL", "BH")
 p2 <- avg_resp(resp = "V",
@@ -553,14 +553,14 @@ p2 <- avg_resp(resp = "V",
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
   #coord_cartesian(ylim = 2:6) +
-  theme_hc()# +
-  # theme(
-  #   legend.position = "none",
-  #   plot.subtitle = element_text(size = 10),
-  #   axis.title = element_text(size = 9),
-  #   axis.text.y = element_blank(),
-  #   axis.ticks.y = element_blank()
-  # ) 
+  theme_hc() +
+  theme(
+    #legend.position = "none",
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 9),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
 
 example = c("DL", "DH")
 p3 <- avg_resp(resp = "V",
@@ -570,14 +570,14 @@ p3 <- avg_resp(resp = "V",
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
   #coord_cartesian(ylim = 2:6) +
-  theme_hc()# +
-  # theme(
+  theme_hc() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
   #   legend.position = "none",
-  #   plot.subtitle = element_text(size = 10),
-  #   axis.title = element_text(size = 9),
-  #   axis.text.y = element_blank(),
-  #   axis.ticks.y = element_blank()
-  # ) 
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 9)
+  ) 
 
 p1+p2+p3
 # grid.arrange(p1, p2, p3, ncol = 3)
@@ -593,7 +593,7 @@ p1+p2+p3
 # D_EXAMPLE_idxBL       -1.44    -0.11
 # V_EXAMPLE_idxBH        0.06     1.41
 # V_EXAMPLE_idxDL       -1.52    -0.15
-# V_EXP                 -0.06     0.56
+# V_EXP                 -0.05     0.56
 
 # posterior_predict bails when using a list() so change to df
 df <- as.data.frame(dat)
@@ -639,11 +639,11 @@ summary(rowMeans(outcome_v))
 # so DH is 1 larger than DL. But as is evident from Qu. we have uncertainty...
 
 # finally, let's have a look at V_EXP
-# foo <- table(post$b_V_EXP>0)
-# foo[2]/10000
+foo <- table(post$b_V_EXP>0)
+foo[2]/10000
 #   TRUE 
-# 0.9507 
-# So, in 95.07% of the cases V_EXP is above 0
+# 0.9451
+# So, in ~95% of the cases V_EXP is above 0
 
 ################################################################################
 # Compare EXP with H and L scenarios in categories (V, A, D) that are sign
