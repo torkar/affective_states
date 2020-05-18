@@ -333,12 +333,24 @@ summary(M) # Check ESS and \widehat{R}
 # posterior_predict()
 
 # Check model fit
-pp_check(M, type = "bars", resp = "A", nsamples = 50) + theme_tufte() + 
-  theme(legend.position = "none")
-pp_check(M, type = "bars", resp = "D", nsamples = 50) + theme_tufte() + 
-  theme(legend.position = "none")
-pp_check(M, type = "bars", resp = "V", nsamples = 50) + theme_tufte() + 
-  theme(legend.position = "none")
+library(bayesplot)
+p1 <- pp_check(M, type = "bars", resp = "V", nsamples = 50) + theme_tufte() + 
+  theme(legend.position = "none", panel.grid.major.y = element_line(), 
+        axis.title.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) + 
+  scale_y_continuous(breaks = seq(from=0,to=50,by=10))
+p2 <- pp_check(M, type = "bars", resp = "A", nsamples = 50) + theme_tufte() + 
+  theme(legend.position = "none", panel.grid.major.y = element_line(),
+        axis.title.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) + 
+  scale_y_continuous(breaks = seq(from=0,to=50,by=10))
+p3 <- pp_check(M, type = "bars", resp = "D", nsamples = 50) + theme_tufte() + 
+  theme(legend.position = "none", panel.grid.major.y = element_line(),
+        axis.title.y = element_blank()) + 
+  scale_y_continuous(breaks = seq(from=0, to=50, by=10)) +
+  scale_x_continuous(breaks = seq(from=1, to=9))
+
+p1 / p2 / p3
 
 plot(M) # Check chains etc. We're estimating 112 params so it's many plots...
 
