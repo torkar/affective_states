@@ -378,7 +378,7 @@ marginal_effects(M)
 # multivariate model M. Below we generate our priors directly from dhcauchy()
 ################################################################################
 # A
-tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+p1 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
   ggplot() +
   # the prior
   geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
@@ -391,7 +391,7 @@ tibble(x = seq(from = 0, to = 10, by = .5)) %>%
   theme_tufte()
 
 # D
-tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+p2 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
   ggplot() +
   # the prior
   geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
@@ -404,7 +404,7 @@ tibble(x = seq(from = 0, to = 10, by = .5)) %>%
   theme_tufte()
 
 # V
-tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+p3 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
   ggplot() +
   # the prior
   geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
@@ -415,6 +415,8 @@ tibble(x = seq(from = 0, to = 10, by = .5)) %>%
                fill = "black", alpha = 1/5, size = 0) +
   xlab(expression(sigma[V])) +
   theme_tufte()
+
+p1 + p2 + p3
 
 ################################################################################
 # Hypothesis testing
