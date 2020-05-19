@@ -58,16 +58,16 @@ cum_pr_k_v <- cumsum(pr_k_v)
 cum_pr_k_a <- cumsum(pr_k_a)
 cum_pr_k_d <- cumsum(pr_k_d)
 
-plot(1:9, cum_pr_k_v, type="b", xlab="response", 
-     ylab="cumulative proportion for Emotions (V)", ylim=c(0,1), bty="n", xaxt="n")
+plot(1:9, cum_pr_k_v, type="b", xlab="", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
-plot(1:9, cum_pr_k_a, type="b", xlab="response", 
-     ylab="cumulative proportion for Feelings (A)", ylim=c(0,1), bty="n", xaxt="n")
+plot(1:9, cum_pr_k_a, type="b", xlab="", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
-plot(1:9, cum_pr_k_d, type="b", xlab="response", 
-     ylab="cumulative proportion for Moods (D)", ylim=c(0,1), bty="n", xaxt="n")
+plot(1:9, cum_pr_k_d, type="b", xlab="", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
 axis(1, seq(1,9,1))
 
 # log-cumulative-odds
@@ -88,6 +88,8 @@ plot(1:9, lco_d, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for D",
 axis(1, seq(1,9,1))
 
 # So now we have a feeling for the response variable.
+
+
 
 ################################################################################
 # Let's look at the priors now. Later below we'll do prior predictive checks.
@@ -315,7 +317,8 @@ M_prio <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
 # m4 -2.3       3.7   
 # M  -3.1       2.3
 # In short, there's not even a difference in out of sample prediction between 
-# #1 and #7 model. We can thus use the more complex models to answer
+# #1 and #7 model, and that's not strange since they all employ the varying intercept
+# We can thus use the more complex models to answer
 # more questions that we have (related to the predictors we include).
 # -3.1 + c(-1,1)*2.3*1.96
 # [1] -7.608  1.408
@@ -338,12 +341,12 @@ p1 <- pp_check(M, type = "bars", resp = "V", nsamples = 50) + theme_tufte() +
   theme(legend.position = "none", panel.grid.major.y = element_line(), 
         axis.title.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank()) + 
-  scale_y_continuous(breaks = seq(from=0,to=50,by=10))
+  scale_y_continuous(breaks = seq(from=0, to=50, by=10))
 p2 <- pp_check(M, type = "bars", resp = "A", nsamples = 50) + theme_tufte() + 
   theme(legend.position = "none", panel.grid.major.y = element_line(),
         axis.title.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank()) + 
-  scale_y_continuous(breaks = seq(from=0,to=50,by=10))
+  scale_y_continuous(breaks = seq(from=0, to=50, by=10))
 p3 <- pp_check(M, type = "bars", resp = "D", nsamples = 50) + theme_tufte() + 
   theme(legend.position = "none", panel.grid.major.y = element_line(),
         axis.title.y = element_blank()) + 
@@ -389,34 +392,8 @@ marginal_effects(M)
 # Check how much posterior has moved from priors for the sd of A, D and V in the 
 # multivariate model M. Below we generate our priors directly from dhcauchy()
 ################################################################################
-# A
-p1 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
-  ggplot() +
-  # the prior
-  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
-              fill = "black", alpha = 1/10) +
-  # the posterior
-  geom_density(data = post,
-               aes(x = sd_ID_idx__A_Intercept), 
-               fill = "black", alpha = 1/5, size = 0) +
-  xlab(expression(sigma[A])) +
-  theme_tufte()
-
-# D
-p2 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
-  ggplot() +
-  # the prior
-  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
-              fill = "black", alpha = 1/10) +
-  # the posterior
-  geom_density(data = post,
-               aes(x = sd_ID_idx__D_Intercept), 
-               fill = "black", alpha = 1/5, size = 0) +
-  xlab(expression(sigma[D])) +
-  theme_tufte()
-
 # V
-p3 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+p1 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
   ggplot() +
   # the prior
   geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
@@ -427,6 +404,37 @@ p3 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>%
                fill = "black", alpha = 1/5, size = 0) +
   xlab(expression(sigma[V])) +
   theme_tufte()
+# A
+p2 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+  ggplot() +
+  # the prior
+  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
+              fill = "black", alpha = 1/10) +
+  # the posterior
+  geom_density(data = post,
+               aes(x = sd_ID_idx__A_Intercept), 
+               fill = "black", alpha = 1/5, size = 0) +
+  xlab(expression(sigma[A])) +
+  theme_tufte() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+# D
+p3 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+  ggplot() +
+  # the prior
+  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 1)),
+              fill = "black", alpha = 1/10) +
+  # the posterior
+  geom_density(data = post,
+               aes(x = sd_ID_idx__D_Intercept), 
+               fill = "black", alpha = 1/5, size = 0) +
+  xlab(expression(sigma[D])) +
+  theme_tufte() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
 
 p1 + p2 + p3
 
