@@ -461,21 +461,35 @@ p1 + p2 + p3
 # for the EXAMPLE parameters we'll check high against low, while for EXP we'll
 # check against 0
 
-hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
+h1 <- hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
 # Moderate evidence for H1, i.e., BH is larger perhaps
-plot(hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b"))
+plot(h1, theme = theme_hc())
 
-hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
+h2 <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
 # Anecdotal evidence for H1, i.e., BH is larger perhaps
-plot(hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b"))
+plot(h2, theme = theme_hc())
 
-hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
+h3 <- hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
 # Strong evidence for H1, i.e., DH probably larger
-plot(hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b"))
+plot(h3, theme = theme_hc())
 
-hypothesis(M, "V_EXP > 0", class = "b")
+par(mfrow=c(3,1))
+plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+lines(density(h1$samples$H1))
+lines(density(h1$prior_samples$H1), lty=2)
+
+plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+lines(density(h2$samples$H1))
+lines(density(h2$prior_samples$H1), lty=2)
+
+plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+lines(density(h3$samples$H1))
+lines(density(h3$prior_samples$H1), lty=2)
+
+# hypothesis(M, "V_EXP > 0", class = "b")
 # Strong evidence for H1, i.e., V_EXP probably positive
-plot(hypothesis(M, "V_EXP > 0", class = "b"))
+#plot(hypothesis(M, "V_EXP > 0", class = "b"), 
+#     theme = theme_hc())
 
 ################################################################################
 # 
