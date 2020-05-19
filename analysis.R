@@ -571,7 +571,7 @@ example = c("BL", "BH")
 p1 <- avg_resp(resp = "D",
                example  = example) %>%
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
-  geom_line(alpha = 1 / 10, color = "black") +
+  geom_line(alpha = 5 / 10, color = "black") +
   scale_x_continuous("outcome D", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
   theme_hc() +
@@ -585,7 +585,7 @@ example = c("BL", "BH")
 p2 <- avg_resp(resp = "V",
                example  = example) %>%
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
-  geom_line(alpha = 1 / 10, color = "black") +
+  geom_line(alpha = 5 / 10, color = "black") +
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
   #coord_cartesian(ylim = 2:6) +
@@ -602,7 +602,7 @@ example = c("DL", "DH")
 p3 <- avg_resp(resp = "V",
                example  = example) %>%
   ggplot(aes(x = intention, y = mean_rating, group = iter)) +
-  geom_line(alpha = 1 / 10, color = "black") +
+  geom_line(alpha = 5 / 10, color = "black") +
   scale_x_continuous("outcome V", breaks = 0:1, labels = c(example[1], example[2])) +
   scale_y_continuous("", limits=c(3,6)) +
   #coord_cartesian(ylim = 2:6) +
