@@ -87,9 +87,11 @@ plot(1:9, lco_d, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for D",
      ylab="log-cumulative-odds for Moods (D)", xaxt="n", bty = "n")
 axis(1, seq(1,9,1))
 
-# So now we have a feeling for the response variable.
-
-
+# So now we have a feeling for the response variables, and here are simple 
+# histograms
+simplehist(d$V, xlim=c(1,9), xlab="", ylab="", ylim=c(0,50))
+simplehist(d$A, xlim=c(1,9), xlab="", ylab="", ylim=c(0,50))
+simplehist(d$D, xlim=c(1,9), xlab="", ylab="", ylim=c(0,50))
 
 ################################################################################
 # Let's look at the priors now. Later below we'll do prior predictive checks.
