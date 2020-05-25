@@ -5,6 +5,9 @@ library(ggthemes)
 library(patchwork)
 library(tidyr)
 library(extraDistr)
+library(ggplot2)
+library(ggridges)
+library(forcats)
 
 # Description of data
 # V, A, D are emotions, feelings, moods, respectively.
@@ -464,31 +467,149 @@ p1 + p2 + p3
 # for the EXAMPLE parameters we'll check high against low, while for EXP we'll
 # check against 0
 
-h1 <- hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
-# Moderate evidence for H1, i.e., BH is larger perhaps
-plot(h1, theme = theme_hc())
+# Perhaps plot all density plots for all hypotheses and note, with colors, 
+# the significance. Let's start with V
 
-h2 <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
-# Anecdotal evidence for H1, i.e., BH is larger perhaps
-plot(h2, theme = theme_hc())
+A <- hypothesis(M, "V_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "V_EXAMPLE_idxCL < V_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "V_EXAMPLE_idxEL < V_EXAMPLE_idxEH", class = "b")
 
-h3 <- hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
-# Strong evidence for H1, i.e., DH probably larger
-plot(h3, theme = theme_hc())
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
 
-par(mfrow=c(3,1))
-plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
-lines(density(h1$samples$H1))
-lines(density(h1$prior_samples$H1), lty=2)
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
 
-plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
-lines(density(h2$samples$H1))
-lines(density(h2$prior_samples$H1), lty=2)
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "C", "E", "B", "A", "D"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = 1.2, y = 'D', 
+           label = deparse(bquote("Strong evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = 1.2, y = 'A', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = 1.2, y = 'B', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = -2.6, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  annotate("text", x = -2.6, y = 'C', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  theme_tufte()
 
-plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
-lines(density(h3$samples$H1))
-lines(density(h3$prior_samples$H1), lty=2)
+# Next we got for A
+A<- hypothesis(M, "A_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "A_EXAMPLE_idxBL < A_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "A_EXAMPLE_idxCL < A_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "A_EXAMPLE_idxDL < A_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "A_EXAMPLE_idxEL < A_EXAMPLE_idxEH", class = "b")
 
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
+
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
+
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "D", "B", "E", "C", "A"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = -2.6, y = 'D', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = -2.6, y = 'A', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = -2.6, y = 'B', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = -2.6, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  annotate("text", x = -2.6, y = 'C', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  theme_tufte()
+
+# Finally we got D
+A<- hypothesis(M, "D_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "D_EXAMPLE_idxCL < D_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "D_EXAMPLE_idxDL < D_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "D_EXAMPLE_idxEL < D_EXAMPLE_idxEH", class = "b")
+
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
+
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
+
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "D", "A", "E", "C", "B"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = -1.3, y = 'D', 
+           label = deparse(bquote("Strong evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "right", family = "serif") +
+  annotate("text", x = -1.3, y = 'A', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "right", family = "serif") +
+  annotate("text", x = 1.2, y = 'B', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif") +
+  annotate("text", x = 1.2, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  annotate("text", x = 1.2, y = 'C', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif") +
+  theme_tufte()
+
+
+# h1 <- hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
+# # Moderate evidence for H1, i.e., BH is larger perhaps
+# plot(h1, theme = theme_hc())
+# 
+# h2 <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
+# # Anecdotal evidence for H1, i.e., BH is larger perhaps
+# plot(h2, theme = theme_hc())
+# 
+# h3 <- hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
+# # Strong evidence for H1, i.e., DH probably larger
+# plot(h3, theme = theme_hc())
+# 
+# h4 <- hypothesis(M, "V_EXAMPLE_idxCL < V_EXAMPLE_idxCH", class = "b")
+# plot(h4, theme = theme_hc())
+# 
+# par(mfrow=c(4,1))
+# plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+# lines(density(h1$samples$H1))
+# lines(density(h1$prior_samples$H1), lty=2)
+# 
+# plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+# lines(density(h2$samples$H1))
+# lines(density(h2$prior_samples$H1), lty=2)
+# 
+# plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+# lines(density(h3$samples$H1))
+# lines(density(h3$prior_samples$H1), lty=2)
+# 
+# plot(NULL, xlim=c(-3,3), ylim=c(0,1.0), bty="n", ylab="", xlab="")
+# lines(density(h4$samples$H1))
+# lines(density(h4$prior_samples$H1), lty=2)
+# 
 # hypothesis(M, "V_EXP > 0", class = "b")
 # Strong evidence for H1, i.e., V_EXP probably positive
 #plot(hypothesis(M, "V_EXP > 0", class = "b"), 
