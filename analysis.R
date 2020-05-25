@@ -296,15 +296,18 @@ pri <- c(prior(cauchy(0, 1), class=sd, resp=A),
 # 
 M <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
            LANG_idx + ENTITIES + EXP + (1|ID_idx), prior = pri, data=dat, 
-         family=cumulative, cores=2, chains=4, iter=5e3, sample_prior = "yes",
+         family=cumulative, cores=2, chains=4, iter=1e4,
          refresh = 0, silent = TRUE, seed = 061215)
+
+# The tail and bulk ESS and Rhats are fine.
+
 #M <- add_criterion(M, "loo")
 
 # Sample the same as above but only using the priors, no data using 
 # sample_prior = "only"
 M_prio <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
            LANG_idx + ENTITIES + EXP + (1|ID_idx), prior = pri, data=dat, 
-         family=cumulative, cores=2, chains=4, iter=5e3, sample_prior = "only",
+         family=cumulative, cores=2, chains=4, iter=1e4, sample_prior = "only",
          refresh = 0, silent = TRUE, seed = 061215, 
          control = list(adapt_delta=0.95))
 
@@ -357,7 +360,7 @@ p3 <- pp_check(M, type = "bars", resp = "D", nsamples = 50) + theme_tufte() +
 
 p1 / p2 / p3
 
-plot(M) # Check chains etc. We're estimating 112 params so it's many plots...
+# plot(M) # Check chains etc. We're estimating 112 params so it's many plots...
 
 # Let's look at the cumulative probabilities for A, V, and D intercepts
 posterior_samples(M) %>% 
