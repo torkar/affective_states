@@ -244,11 +244,11 @@ p1 + p3 + p6
 # Let us build models step by step and use LOO in the end for model comparison!
 # We model in brms using family=cumulative("logit") and predictor as mo(EDU) 
 # since it's a Dirichlet process.
-pri <- c(prior(cauchy(0, 1), class=sd, resp=A),
-         prior(cauchy(0, 1), class=sd, resp=V),
-         prior(cauchy(0, 1), class=sd, resp=D),
+pri <- c(prior(cauchy(0, 2), class=sd, resp=A),
+         prior(cauchy(0, 2), class=sd, resp=V),
+         prior(cauchy(0, 2), class=sd, resp=D),
          prior(normal(0, 0.5), class=b),
-         prior(normal(0, 1), class=Intercept),
+         prior(normal(0, 5), class=Intercept),
          prior(dirichlet(c(2, 2, 2, 2, 2)), 
                class = "simo", coef = "moEDU1", resp="A"),
          prior(dirichlet(c(2, 2, 2, 2, 2)), 
@@ -749,22 +749,29 @@ p1+p2+p3
 # https://discourse.mc-stan.org/t/contrasts-in-brms/7824
 # The general answer to all these questions is to compare the posterior 
 # predictions of the model at different levels of the factor. 
-# For example, let's look at some of our more interesting effects.
-# D_EXAMPLE_idxBL       -1.44    -0.11
-# V_EXAMPLE_idxBH        0.06     1.41
-# V_EXAMPLE_idxDL       -1.52    -0.15
-# V_EXP                 -0.05     0.56
+# For example, let's look at some of our more interesting results from the 
+# hypothesis testing, i.e., strong evidence in two cases for Example D in 
+# outcomes V and D, and two with moderate evidence in Examples A and C in 
+# outcome V
+
+# In short, these are the effect sizes we want to look at
+# V_EXAMPLE_DL vs V_EXAMPLE_DH
+# D_EXAMPLE_DL vs D_EXAMPLE_DH
+# V_EXAMPLE_AL vs V_EXAMPLE_AH
+# V_EXAMPLE_CL vs V_EXAMPLE_CH
+
+# Let's start with the first two since they both concern DL vs DH
 
 # posterior_predict bails when using a list() so change to df
 df <- as.data.frame(dat)
 df$EXAMPLE_idx <- as.factor(df$EXAMPLE_idx)
 df$EDU <- droplevels(df$EDU)
 
-# For level BH and BL check difference between them
-data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[4], ] # BL
+# For level DL vs DH in V and D 
+data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[8], ] # DL
 PPD_1 <- posterior_predict(M, newdata = data_1)
 data_2 <- data_1
-data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[3] # BH
+data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[7] # DH
 PPD_2 <- posterior_predict(M, newdata = data_2)
 PPD_diff <- PPD_2 - PPD_1 # Difference(!) between two levels
 
@@ -775,35 +782,45 @@ outcome_v <- PPD_diff[,,3] # V
 # https://discourse.mc-stan.org/t/posterior-linpred-with-ordinal-models/2260/3
 summary(rowMeans(outcome_d))
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -2.8421 -0.1579  0.4211  0.4389  1.0526  3.7895
-# so BH is 0.4 larger in median compared to BL
+# -3.9000 -1.3000 -0.8000 -0.7763 -0.2500  2.5000 
+# so DL is -0.8 smaller in median compared to DH in outcome D
 
 summary(rowMeans(outcome_v))
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -2.4211 -0.2632  0.2632  0.2775  0.8421  3.1053
-# so BH is ~0.3 larger in median compare to BL
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -1.600   0.500   1.000   1.016   1.500   3.650
+# so DH is 1.0 larger in median compare to DL
 
-# and now V and DL vs. DH
-data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[8], ] # DL
+# and now V and AL vs. AH
+data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[2], ] # AL
 PPD_1 <- posterior_predict(M, newdata = data_1)
 data_2 <- data_1
-data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[7] # DH
+data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[1] # AH
 PPD_2 <- posterior_predict(M, newdata = data_2)
 PPD_diff <- PPD_2 - PPD_1 # Difference(!) between two levels
 
 # remember, we had three outcomes D, A, and V, so store V separately
 outcome_v <- PPD_diff[,,3] # V
 summary(rowMeans(outcome_v))
-#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -2.150   0.450   1.000   1.011   1.550   4.250
-# so DH is 1 larger than DL. But as is evident from Qu. we have uncertainty...
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -2.4500  0.0500  0.5000  0.5033  0.9500  3.2000
+# so DH is 0.5 larger than DL. But as is evident from Qu. we have uncertainty...
 
-# finally, let's have a look at V_EXP
-foo <- table(post$b_V_EXP>0)
-foo[2]/10000
-#   TRUE 
-# 0.9451
-# So, in ~95% of the cases V_EXP is above 0
+# Finally we have V_EXAMPLE_CL vs V_EXAMPLE_CH
+data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[6], ] # CL
+PPD_1 <- posterior_predict(M, newdata = data_1)
+data_2 <- data_1
+data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[5] # CH
+PPD_2 <- posterior_predict(M, newdata = data_2)
+PPD_diff <- PPD_2 - PPD_1 # Difference(!) between two levels
+
+# remember, we had three outcomes D, A, and V, so store D & V separately
+outcome_v <- PPD_diff[,,3] # V
+
+# https://discourse.mc-stan.org/t/posterior-linpred-with-ordinal-models/2260/3
+summary(rowMeans(outcome_v))
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -3.5556 -1.2778 -0.7778 -0.7654 -0.2778  2.5556
+
 
 ################################################################################
 # Compare EXP with H and L scenarios in categories (V, A, D) that are sign
