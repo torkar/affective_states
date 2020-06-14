@@ -781,14 +781,12 @@ outcome_v <- PPD_diff[,,3] # V
 
 # https://discourse.mc-stan.org/t/posterior-linpred-with-ordinal-models/2260/3
 summary(rowMeans(outcome_d))
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -3.9000 -1.3000 -0.8000 -0.7763 -0.2500  2.5000 
-# so DL is -0.8 smaller in median compared to DH in outcome D
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -4.7000 -1.3500 -0.8000 -0.7853 -0.2000  2.8500
 
 summary(rowMeans(outcome_v))
-#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -1.600   0.500   1.000   1.016   1.500   3.650
-# so DH is 1.0 larger in median compare to DL
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -2.100   0.450   1.000   1.012   1.550   3.900 
 
 # and now V and AL vs. AH
 data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[2], ] # AL
@@ -801,9 +799,8 @@ PPD_diff <- PPD_2 - PPD_1 # Difference(!) between two levels
 # remember, we had three outcomes D, A, and V, so store V separately
 outcome_v <- PPD_diff[,,3] # V
 summary(rowMeans(outcome_v))
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -2.4500  0.0500  0.5000  0.5033  0.9500  3.2000
-# so DH is 0.5 larger than DL. But as is evident from Qu. we have uncertainty...
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -2.3000  0.0000  0.5000  0.4992  1.0000  3.7500 
 
 # Finally we have V_EXAMPLE_CL vs V_EXAMPLE_CH
 data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[6], ] # CL
@@ -818,9 +815,8 @@ outcome_v <- PPD_diff[,,3] # V
 
 # https://discourse.mc-stan.org/t/posterior-linpred-with-ordinal-models/2260/3
 summary(rowMeans(outcome_v))
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -3.5556 -1.2778 -0.7778 -0.7654 -0.2778  2.5556
-
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -4.8333 -1.3889 -0.8333 -0.8323 -0.2778  2.3333 
 
 ################################################################################
 # Compare EXP with H and L scenarios in categories (V, A, D) that are sign
