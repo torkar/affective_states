@@ -211,7 +211,7 @@ for(i in 1:N)
 
 In short, the above shows how our combined priors look like in the probability space ($y$-axis). Due to the gap in the middle one could say we are skeptical of any extreme curves around 0. In the end, prior predictive checks will allow us to investigate this on the outcome scale.
 
-Above we used a Dirichlet prior on ordered categorical data. The Dirichlet is a generalization of the Beta distribution, modeling probability $(0,1)$, but instead of having one probability being estimated, we can have many. How many depends on the number of categories $K$, which means we need to set the prior with $K-1$ parameters (the last category we can calculate from the previous category).
+Above we used a Dirichlet prior on ordered categorical data. The Dirichlet is a generalization of the Beta distribution, modeling probability $(0,1)$, but instead of having one probability being estimated, we can have many [@blei2003latent]. How many depends on the number of categories $K$, which means we need to set the prior with $K-1$ parameters (the last category we can calculate from the previous category).
 
 If we plot different Dirichlet priors we might better understand what it does,
 ```{r}
@@ -244,7 +244,7 @@ So all of the above are for estimating $5+1$ categories using $5$ parameters. It
 # Model comparisons and prior predictive checks
 Since we use the cumulative likelihood we'll have a hard time using any principled ways of conducting variable selection. Luckily, in our case, we are really not interested in arriving to as small a set of predictors as possible. Hence, we use all predictors and instead do model comparisons while adding them one by one.
 
-First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities.
+First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities [@vehtariGG17loo].
 
 ```{r mod_comp, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 m1 <- brm(mvbind(D,A,V) ~ mo(EDU) + (1|ID_idx),
