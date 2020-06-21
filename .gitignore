@@ -2,7 +2,6 @@
 .DS_Store
 docs/index_cache
 docs/index_files
-docs/index.html
 *.RData
 
 # History files

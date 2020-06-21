@@ -28,7 +28,7 @@ library(ggridges)
 library(forcats)
 
 # For determinism
-SEED = 20061215
+SEED = 061215
 set.seed(SEED)
 
 # run on multi-core cpus. We use the default four
@@ -131,7 +131,8 @@ So now we have a feeling for the response variables.
 # Prior sensitivity analysis
 
 Let's look at the priors now. Later below we'll do prior predictive checks.
-So for each linear model in our multivariate model we have the following priors:
+
+So for each linear model in our multivariate model we set the following priors for now:
 
 * mo(EDU) - Dirichlet prior (we set {2,2,2,2,2} which is very weak)
 * EXAMPLE_idx - N(0,1) times 10 factors. Means (1*10)^2 in variance
@@ -208,9 +209,9 @@ for(i in 1:N)
         add=TRUE)
 ```
 
-In short, the above shows how our combined priors look like in the probability space ($y$). Due to the gap in the middle one could say we are skeptical of any extreme curves around 0. In the end, prior predictive checks will allow us to investigate this on the outcome scale.
+In short, the above shows how our combined priors look like in the probability space ($y$-axis). Due to the gap in the middle one could say we are skeptical of any extreme curves around 0. In the end, prior predictive checks will allow us to investigate this on the outcome scale.
 
-Above we used a Dirichlet prior on ordered categorical data. The Dirichlet is a generalization of the Beta distribution, probability (0,1), but instead of having one probability being estimated using a Dirichlet prior, we can have many. How many depends on the number of categories $K$, which means we need to set the prior with $K-1$ parameters (the last category we can calculate from the previous category).
+Above we used a Dirichlet prior on ordered categorical data. The Dirichlet is a generalization of the Beta distribution, modeling probability $(0,1)$, but instead of having one probability being estimated, we can have many. How many depends on the number of categories $K$, which means we need to set the prior with $K-1$ parameters (the last category we can calculate from the previous category).
 
 If we plot different Dirichlet priors we might better understand what it does,
 ```{r}
@@ -238,12 +239,12 @@ p2 <-  data.frame(x, y = dbeta(x, 2, 10)) %>%
 p2 / p4 / p6
 ```
 
-So all of the above are for estimating $6+1$ categories using $6$ parameters. It's evident that the higher numbers we set for our parameters ($2 \rightarrow 4 \rightarrow 6$) the more mass is on lower probabilities. Having 2's implies an almost flat prior, i.e., we really don't have any good prior knowledge on how this simplex would look like so this is it.
+So all of the above are for estimating $5+1$ categories using $5$ parameters. It's evident that the higher numbers we set for our parameters ($2 \rightarrow 4 \rightarrow 6$) the more mass is on lower probabilities. Having 2's implies an almost flat prior, i.e., we really don't have any good prior knowledge on how this simplex would look like so this is it.
 
 # Model comparisons and prior predictive checks
-Since we have a cumulative likelihood we'll have a hard time using any principled ways of conducting variable selection. Luckily, in our case, we are really not interested in arriving to as small a set of predictors as possible. We use all predictors and instead we do model comparisons while adding them one by one.
+Since we use the cumulative likelihood we'll have a hard time using any principled ways of conducting variable selection. Luckily, in our case, we are really not interested in arriving to as small a set of predictors as possible. Hence, we use all predictors and instead do model comparisons while adding them one by one.
 
-First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities. We will not run all models below but simply list them here for completeness.
+First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities.
 
 ```{r mod_comp, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 m1 <- brm(mvbind(D,A,V) ~ mo(EDU) + (1|ID_idx),
@@ -270,53 +271,52 @@ m6 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
 m7 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
             LANG_idx + ENTITIES + EXP + (1|ID_idx),
          data=dat, family=cumulative)
-
-m8 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
-            LANG_idx + ENTITIES + EXP + (1|c|ID_idx),
-         data=dat, family=cumulative)
 ```
 
-And here are our final priors and model $\mathcal{M}$, which we'll now run and sample only from the priors first. The model consists of all predictors, and in the case of EDU it's modeled as monotonic, i.e., ordered categorical with a Dirichlet prior. Additionally, for the varying intercept (ID_idx) we also model the correlation between our three outcomes $\{V,A,D\}$, the logic being that it's the same subject who's answered all question and thus it's likely that the answers are correlated. For the correlation we'll us the LKJ(2) prior (which can be considered a default prior for modeling correlations). The 2 in LKJ(2) implies that we are slightly skeptical of extreme correlations.
+```{r loo, cache=TRUE, warning=FALSE, error=FALSE}
+loo_compare(loo(m1),loo(m2),loo(m3),loo(m4),loo(m5),loo(m6),loo(m7))
+```
 
-First, set priors on our 136 parameters we want to estimate and then sample only from the priors. We set the Lewandowski-Kurowicka-Joe (LKJ) prior for our correlations, $\mathcal{N}(0, 0.3)$ on $\beta$, and $\mathcal{N}(0, 2.5)$ on $\alpha$ (since we have a cumulative model we have several $\alpha$, one for each border between responses, i.e., $9$ responses means $8$ $\alpha$). We have $\mathrm{Weibull}(2,1)$ as prior for modeling $\sigma$ (allowing only positive real numbers) and, finally, our Dirichlet prior on the predictor EDU, which is ordered categorical. We recommend you to change the priors and see how this affects the prior probability distribution.
+So, in short, very small differences between the models and if we would consider out of sample prediction capabilities only, then one could opt for the smaller model, i.e., $\mathcal{M}_2$. However, we are really interested in looking at all independent variables. Hence, $\mathcal{M}_7$ is our preferred model, $\mathcal{M}$, which we'll now run and sample only from the priors (liek we did above in the prior sensitivity analysis). 
+
+First, set priors on our parameters we want to estimate and then sample only from the priors. We set $\mathcal{N}(0, 0.5)$ on $\beta$, and $\mathcal{N}(0, 5)$ on $\alpha$ (since we have a cumulative model we have several $\alpha$, one for each border between responses, i.e., $9$ responses means $8$ $\alpha$). We have $\mathrm{Weibull}(2,1)$ as prior for modeling $\sigma$ (allowing only positive real numbers) and, finally, our Dirichlet prior on the predictor EDU, which is modeled as monotonic. We recommend you to change the priors and see how this affects the prior probability distribution.
 
 ```{r M_prio, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 p <- get_prior(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
-                LANG_idx + ENTITIES + EXP + (1|c|ID_idx),
+                LANG_idx + ENTITIES + EXP + (1|ID_idx),
                family = cumulative, data = dat)
 
-p$prior[2] <- "lkj(2)"
-p$prior[c(5,49,93)] <- "normal(0,0.3)"
-p$prior[c(36,80,124)] <- "normal(0,2.5)"
-p$prior[c(45,89,133)] <- "weibull(2,1)"
-p$prior[c(48,92,136)] <- "dirichlet(2,2,2,2,2)"
+p$prior[c(3,47,91)] <- "normal(0,0.5)" # 30 betas for each outcome
+p$prior[c(34,78,122)] <- "normal(0,5)" # 8 alphas for each outcome
+p$prior[c(43,87,131)] <- "cauchy(0,2)" # 1 sigma for each outcome
+p$prior[c(46,90,134)] <- "dirichlet(2,2,2,2,2)" # 1 monotonic for each outcome
 
 M_prio <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
-                LANG_idx + ENTITIES + EXP + (1|c|ID_idx), prior = p, data=dat, 
+                LANG_idx + ENTITIES + EXP + (1|ID_idx), prior = p, data=dat, 
          family=cumulative, sample_prior = "only", seed = SEED)
 ```
 
-Now plot our priors in the outcome scale,
+Now plot our priors on the outcome scale,
 
 ```{r cache=TRUE}
 pp_check(M_prio, type="bars", resp = "V", nsamples = 1000)
 ```
 
-The $y$-axis are the counts while the $x$-axis are the Likert scale outcome for the response $V$. As we see, the medians for our prior samples ($y_{\mathrm{rep}}$) are evenly distributed and the credible intervals are wide (the bars are our empirical data $y$). This looks to be a good setup for our model. Now, let's use our data and sample,
+The $y$-axis are the counts while the $x$-axis is the Likert scale outcome for the response $V$. As we see, the medians for our prior samples ($y_{\mathrm{rep}}$) are evenly distributed and the credible intervals are wide (the bars are our empirical data $y$). This looks to be a good setup for our model. Now, let's combine our prior with our data to arrive to the posterior probability distribution,
 
 ```{r M, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 M <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
-                LANG_idx + ENTITIES + EXP + (1|c|ID_idx), 
+                LANG_idx + ENTITIES + EXP + (1|ID_idx), 
          prior = p, data=dat, family=cumulative, seed = SEED)
 ```
 
 # Diagnostics and posterior predictive checks
-A minimum of three diagnostics should preferably always be checked before one puts any trust in a model (and you should never trust a model completely...) First we can use `plot(M)` to visualize how well the chains have mixed (they should look like fat hairy caterpillar plots). We won't plot them here since they will take up a lot of space.
+A minimum of three diagnostics should preferably always be checked before one puts any trust in a model (and you should never trust a model completely$\ldots$) First we can use `plot(M)` to visualize how well the chains have mixed (they should look like fat hairy caterpillar plots). We won't plot them here since they will take up a lot of space.
 
 Next we check $\widehat{R}$ to check the between- and within-variance of the chains. If all is well they should converge towards $1.0$ when $N \rightarrow \infty$. As a rule of thumb, if $\widehat{R} > 1.01$ it's an indication that the chains have not converged to a stationary posterior probability distribution.
 
 ```{r}
-# the correlations give an NA, as they should so exclude it
+# the discrimination params are NAs, as they should, so we exclude them
 max(rhat(M), na.rm = TRUE) 
 ```
 
@@ -326,20 +326,350 @@ The effective sample size should be larger than $10$% of the total sample size,
 min(neff_ratio(M), na.rm = TRUE)
 ```
 
-So, diagnostics look good. Let's als o do some posterior predictive checks.
+So, diagnostics look good. Let's also do some posterior predictive checks.
 ```{r}
 pp_check(M, type = "bars", resp = "V", nsamples = NULL)
 pp_check(M, type = "bars", resp = "A", nsamples = NULL)
 pp_check(M, type = "bars", resp = "D", nsamples = NULL)
 ```
 
-According to `?ppc_bars`,
+According to the function description for `?ppc_bars`:
+
 > Rootograms allow for diagnosing problems in count data models such as overdispersion or excess zeros. They consist of a histogram of $y$ with the expected counts based on yrep overlaid as a line along with uncertainty intervals. The $y$-axis represents the square roots of the counts to approximately adjust for scale differences and thus ease comparison between observed and expected counts. 
 
 ```{r}
 pp_check(M, resp="V", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
 pp_check(M, resp="A", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
 pp_check(M, resp="D", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
+```
+
+Finally, we can check $\sigma$ in the posterior and compare to the prior,
+```{r}
+post <- posterior_samples(M)
+p1 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+  ggplot() +
+  # the prior
+  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 2)),
+              fill = "black", alpha = 1/10) +
+  # the posterior
+  geom_density(data = post,
+               aes(x = sd_ID_idx__V_Intercept), 
+               fill = "black", alpha = 1/5, size = 0) +
+  xlab(expression(sigma[V])) +
+  theme_tufte()
+# A
+p2 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+  ggplot() +
+  # the prior
+  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 2)),
+              fill = "black", alpha = 1/10) +
+  # the posterior
+  geom_density(data = post,
+               aes(x = sd_ID_idx__A_Intercept), 
+               fill = "black", alpha = 1/5, size = 0) +
+  xlab(expression(sigma[A])) +
+  theme_tufte() 
+
+# D
+p3 <- tibble(x = seq(from = 0, to = 10, by = .5)) %>% 
+  ggplot() +
+  # the prior
+  geom_ribbon(aes(x = x, ymin = 0, ymax = dhcauchy(x, sigma = 2)),
+              fill = "black", alpha = 1/10) +
+  # the posterior
+  geom_density(data = post,
+               aes(x = sd_ID_idx__D_Intercept), 
+               fill = "black", alpha = 1/5, size = 0) +
+  xlab(expression(sigma[D])) +
+  theme_tufte()
+
+p1 / p2 / p3
+```
+
+The dark densities are the estimated standard deviations. We can see that they differ from our priors and that they are quite precisely estimated.
+
+# Inference
+
+In the manuscript we report $95$% credible intervals, but here we can take the opportunity and do it properly and look at $89$% credible intervals. After all, $89$ is at least a prime number$\ldots$
+
+The following parameters were significant on the $89$%-level:
+
+* Outcome $V$, covariate EXPERIENCE
+* Outcome $V$, covariate EXAMPLE DL
+* Outcome $V$, covariate EXAMPLE CL
+* Outcome $V$, covariate EXAMPLE BH 
+* Outcome $D$, covariate EXAMPLE BL
+
+Let's plot Experience as a conditional effect (for all three of the outcomes $\{V,A,D\}$), i.e., keep all covariates at their mean, or the reference level for categorical covariates, and vary only Experience (as we do in the manuscript).
+```{r ce, warning=FALSE, message=FALSE}
+conditional_effects(M, effects = "EXP", resp = "V")
+conditional_effects(M, effects = "EXP", resp = "A")
+conditional_effects(M, effects = "EXP", resp = "D")
+```
+
+We could also set some fixed values for our covariates and see what this implies. Below we define a function to do jus that,
+```{r}
+# Remember, our model had six fixed effects: 
+# EXAMPLE_idx, MAJOR_idx, ROLE_idx, LANG_idx, ENTITIES, and EXP
+# Let's use a function to create fitted() response values for A, V, 
+# and D (where each consist of a Likert 1-9).
+
+avg_resp <- function(resp, example){
+  
+  if (resp != "A" & resp != "D" & resp != "V")
+    stop("Only outcomes A, V or D are supported.")  
+  
+  nd <-
+    tibble(EXAMPLE_idx = example,
+           MAJOR_idx   = c("SE"), # software engineer (largest group, n=90)
+           EDU = 3, # Bachelor (largest group, n=85)
+           ROLE_idx = c("D"), # developer (largest group, n=125)
+           LANG_idx = c("CS"), # C# (largest group, n=100)
+           ENTITIES = 0, # we've scaled this already
+           EXP = 0 # same here
+    )
+  
+  max_iter <- 100
+  resp <- resp
+  
+  fitted(M, 
+         newdata = nd, 
+         subset  = 1:max_iter,
+         re_formula = NA,
+         resp = resp,
+         summary = FALSE) %>% 
+    as_tibble() %>%
+    gather() %>%
+    mutate(iter = rep(1:max_iter, times = 18)) %>%
+    select(iter, everything()) %>% 
+    separate(key, into = c("intention", "rating")) %>% 
+    mutate(intention = intention %>% as.double(),
+           rating    =  rating %>% as.double()) %>%
+    mutate(intention = intention -1) %>%
+    rename(pk = value) %>% 
+    mutate(`pk:rating` = pk * rating) %>% 
+    group_by(iter, intention) %>% 
+    arrange(iter, intention, rating) %>% 
+    mutate(probability = cumsum(pk)) %>% 
+    filter(rating < 9) %>%
+    summarise(mean_rating = sum(`pk:rating`))
+}
+```
+
+Next, we use the above function. In our case, we have decided that we are interested in the largest category or median for each predictor, i.e.,
+
+* major: SE $n=90$
+* edu: bachelor $n=85$
+* role: developer $n=125$
+* lang: C# $n=100$
+* entities: $5$ (median)
+* exp: $8$ (median)
+
+So, this is just another view we can take on this. Let's analyze in particular outcome $D$ and the artifact $B$, Low and High.
+
+```{r message=FALSE, warning=FALSE}
+example = c("BL", "BH")
+avg_resp(resp = "D",
+         example  = example) %>%
+  ggplot(aes(x = intention, y = mean_rating, group = iter)) +
+  geom_line(alpha = 5 / 10, color = "black") +
+  scale_x_continuous("outcome D", breaks = 0:1, 
+                     labels = c(example[1], example[2])) +
+  scale_y_continuous("", limits=c(2,6)) +
+  theme_hc() +
+  theme(plot.subtitle = element_text(size = 10),
+  axis.title = element_text(size = 9)
+  ) 
+```
+
+What we see above are $100$ draws from the posterior probability distribution. This is concretely what a significant effect *looks* like in this case.
+
+## Effect sizes
+If we want to consider effects sizes then that's very easy since we have a posterior probability distribution. In short, we simply count the number of times something is better than something else when we change the levels on factors. Let's continue by using $D$ and $B$, Low/High.
+
+```{r}
+# need a df and not a list
+df <- as.data.frame(dat)
+
+# set as factors
+df$EXAMPLE_idx <- as.factor(df$EXAMPLE_idx)
+
+# make sure to remove unused levels
+df$EDU <- droplevels(df$EDU)
+
+# For level BL vs BH in D 
+# create a representative sample
+data_1 <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[4], ] # BL
+# do posterior predictions
+PPD_1 <- posterior_predict(M, newdata = data_1)
+
+# Now do the same for level BH
+data_2 <- data_1
+data_2$EXAMPLE_idx[1:nrow(data_2)]  <- levels(df$EXAMPLE_idx)[3] # BH
+PPD_2 <- posterior_predict(M, newdata = data_2)
+
+# What is the difference?
+PPD_diff <- PPD_2 - PPD_1
+
+# remember, we had three outcomes D, A, and V, so store D separately
+outcome_d <- PPD_diff[,,1] # D
+
+# Simple check means of the rows
+summary(rowMeans(outcome_d))
+```
+
+Let's do the same with the covariate years. First, create a function we can use, and then set two settings for years ($5$, $30$), and a level $B$ High.
+```{r}
+comp_exp <- function(level, yrs){
+  
+  if (level > 10 | level < 1 | yrs < 0)
+    stop("Set correct level and/or use only Z^+ for years.")    
+
+  # pick out all rows where EXAMPLE_idx = level
+  # > levels(df$EXAMPLE_idx)
+  # [1] "AH" "AL" "BH" "BL" "CH" "CL" "DH" "DL" "EH" "EL"
+  dat1yrs <- df[df$EXAMPLE_idx == levels(df$EXAMPLE_idx)[level], ]
+  
+  # Change EXP to yrs (check mean and sd on original dataset, since we 
+  # standardized)
+  dat1yrs$EXP[1:nrow(dat1yrs)] <- (yrs-mean(d$EXP))/sd(d$EXP)
+  
+  # predict responses based on the fitted model
+  posterior_predict(M, newdata = dat1yrs)
+}
+```
+
+Now we use the above function,
+```{r}
+yrs1 <- 5
+yrs2 <- 30
+lvl <- 3 # BH
+
+# BH
+yrs_low <- comp_exp(lvl, yrs1)
+yrs_high <- comp_exp(lvl,yrs2)
+
+# what's the difference?
+PPD_diff <- yrs_high - yrs_low
+
+# D Below implies that yrs_low is larger by ~0.3
+summary(rowMeans(PPD_diff[,,1]))
+```
+
+As you can imagine, you can do as many of these checks as you want, and the good thing is that you usually don't have to worry about multiple testing. Let's focus on the Bayesian hypothesis testing approach next.
+
+# Hypothesis testing
+Even though it might feel unnecessary to conduct hypothesis testing, many readers are comfortable with the concept and as such we show below how this can be done. Worth mentioning here is that if you conduct hypothesis testing in a Bayesian framework, then you need to have conducted prior predictive checks and sensitivity analysis beforehand. Setting good priors is key when in comes to using Bayes Factor, which is Bayesian hypothesis testing.
+
+Below follows the code for the plots in the manuscript,
+
+```{r}
+A <- hypothesis(M, "V_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "V_EXAMPLE_idxCL < V_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "V_EXAMPLE_idxDL < V_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "V_EXAMPLE_idxEL < V_EXAMPLE_idxEH", class = "b")
+
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
+
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
+
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "C", "E", "B", "A", "D"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = 1.2, y = 'D', 
+           label = deparse(bquote("Strong evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'A', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'B', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'C', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  theme_tufte()
+
+# Next we got for A
+A<- hypothesis(M, "A_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "A_EXAMPLE_idxBL < A_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "A_EXAMPLE_idxCL < A_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "A_EXAMPLE_idxDL < A_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "A_EXAMPLE_idxEL < A_EXAMPLE_idxEH", class = "b")
+
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
+
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
+
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "D", "B", "E", "C", "A"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = -2.6, y = 'D', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'A', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'B', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  annotate("text", x = -2.6, y = 'C', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  theme_tufte()
+
+# Finally we got D
+A<- hypothesis(M, "D_EXAMPLE_idxAL < 0", class = "b")
+B <- hypothesis(M, "D_EXAMPLE_idxBL < D_EXAMPLE_idxBH", class = "b")
+C <- hypothesis(M, "D_EXAMPLE_idxCL < D_EXAMPLE_idxCH", class = "b")
+D <- hypothesis(M, "D_EXAMPLE_idxDL < D_EXAMPLE_idxDH", class = "b")
+E <- hypothesis(M, "D_EXAMPLE_idxEL < D_EXAMPLE_idxEH", class = "b")
+
+df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
+                 D=D$samples$H1, E=E$samples$H1)
+
+df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
+
+ggplot(df, aes(x = Contrast, 
+               y = fct_relevel(Category, levels = "D", "A", "E", "C", "B"))) +
+  geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
+                      scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
+                      alpha = 0.7) +
+  ylab("Hypotheses") +
+  geom_vline(xintercept = 0, size = 0.2) +
+  annotate("text", x = -1.3, y = 'D', 
+           label = deparse(bquote("Strong evidence for"~italic(H)[0])), 
+           parse = TRUE, hjust = "right", family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'A', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'B', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = 0, family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'E', 
+           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  annotate("text", x = 1.2, y = 'C', 
+           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           parse = TRUE, hjust = "left", family = "serif", size=2) +
+  theme_tufte()
 ```
 
 # Computational environment
