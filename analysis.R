@@ -27,7 +27,7 @@ library(forcats)
 # g. EXP ratio-1-35 professional experience in programming (years, rounded down) 
 # h. ENTITIES ratio-2-13. Number of logical abstractions in the example 
 
-d <- read.csv("./data.csv")
+d <- read.csv("../data/data.csv")
 
 dat <- list(
   V = d$V,
@@ -291,7 +291,7 @@ pri <- c(prior(cauchy(0, 2), class=sd, resp=A),
 # m5 <- add_criterion(m5, "loo")
 # 
 # m6 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
-#             LANG_idx + ENTITIES + (1|ID_idx), 
+#             LANG_idx + ENTITIES + EXP (1|ID_idx), 
 #          prior = pri, 
 #          data=dat, family=cumulative, cores=2, chains=4, iter=2e3,
 #          sample_prior = TRUE)
