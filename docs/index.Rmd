@@ -1,0 +1,350 @@
+---
+title: "Replication package for the paper *Measuring affective states from technical debt*"
+author: "R. Torkar, J. Olsson, T. Besker, and A. Martini"
+date: '`r paste("First created on 2020-06-20. Updated on", Sys.Date())`.'
+
+css: ./tables_format.css
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    df_print: paged
+bibliography: [./refs.bib]
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(brms)
+library(rethinking)
+library(dplyr)
+library(ggthemes)
+library(patchwork)
+library(tidyr)
+library(extraDistr)
+library(ggplot2)
+library(ggridges)
+library(forcats)
+
+# For determinism
+SEED = 20061215
+set.seed(SEED)
+
+# run on multi-core cpus. We use the default four
+options(mc.cores=parallel::detectCores())
+```
+
+# Data preparation
+
+```{r}
+d <- read.csv("../data/data.csv")
+
+dat <- list(
+  V = d$V,
+  A = d$A,
+  D = d$D,
+  EDU = factor(d$EDU, levels = c("1","2","3","4","5","6","7"), ordered=TRUE), # ordinal 1-7 int (since it's monotonic)
+  EXAMPLE_idx = d$EXAMPLE, # nominal 1-10 factor
+  ID_idx = as.integer(d$ID), # subject ID
+  MAJOR_idx = d$MAJOR, # nominal 1-6 factor
+  ROLE_idx = d$ROLE, # nominal 1-5 factor
+  LANG_idx = d$LANG, # nominal 1-10 factor
+  EXP = scale(d$EXP), # 1-35 years of experience
+  ENTITIES = scale(d$ENTITIES) # 2-13 logical abstractions
+)
+
+str(dat)
+```
+
+V, A, D are codes for emotions, feelings, and moods, respectively. For each of the outcomes, $\{V,A,D\}$, we have recorded a number of predictors (covariates):
+
+* EDU is ordinal (7 levels), and represents participants' educational level (from none to PhD).
+* MAJOR is nominal (6), and represents participants' education background, e.g. Business Administration, Computer Science, Electrical Engineering, etc.
+* ROLE nominal (5), represents participants' work title: Architect, Developer, Manager, etc.
+* EXAMPLE nominal (10), represents which scenario A-E
+and, additionally, level (i.e., High or Low technical debt).
+* LANG nominal (10), programming language most experience in, e.g., Ada, C, C#, etc.
+* ID nominal (40). ID of participant.
+* EXP ratio (1,35) professional experience in programming (years, rounded down). As is evident above we've scaled the variable.
+* ENTITIES ratio (2,13). Number of logical abstractions in the example. As is evident above we've scaled the variable.
+
+# Descriptive statistics
+Let's plot our outcomes,
+```{r}
+simplehist(dat$V, xlim=c(1,9), ylim=c(0,50), 
+           xlab = "response for V", bty="n")
+simplehist(dat$A, xlim=c(1,9), ylim=c(0,50), 
+           xlab = "response for A", bty="n")
+simplehist(dat$D, xlim=c(1,9), ylim=c(0,50), 
+           xlab = "response for D", bty="n")
+```
+
+Let's also look at the cumulative proportions,
+```{r}
+# discrete proportion of each response value in V, A, and D
+pr_k_v <- table(dat$V) / nrow(d)
+pr_k_a <- table(dat$A) / nrow(d)
+pr_k_d <- table(dat$D) / nrow(d)
+
+# cumsum converts to cumulative proportions 
+cum_pr_k_v <- cumsum(pr_k_v)
+cum_pr_k_a <- cumsum(pr_k_a)
+cum_pr_k_d <- cumsum(pr_k_d)
+
+plot(1:9, cum_pr_k_v, type="b", xlab="response for V", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
+axis(1, seq(1,9,1))
+
+plot(1:9, cum_pr_k_a, type="b", xlab="response for A", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
+axis(1, seq(1,9,1))
+
+plot(1:9, cum_pr_k_d, type="b", xlab="response for D", 
+     ylab="", ylim=c(0,1), bty="n", xaxt="n")
+axis(1, seq(1,9,1))
+```
+
+and log cumulative odds,
+
+```{r}
+# log-cumulative-odds
+lco_v <- logit_scaled(cum_pr_k_v)
+lco_a <- logit_scaled(cum_pr_k_a)
+lco_d <- logit_scaled(cum_pr_k_d)
+
+plot(1:9, lco_v, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for V", 
+     ylab="log-cumulative-odds for Emotions (V)", xaxt="n", bty = "n")
+axis(1, seq(1,9,1))
+
+plot(1:9, lco_a, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for A", 
+     ylab="log-cumulative-odds for Feelings (A)", xaxt="n", bty = "n")
+axis(1, seq(1,9,1))
+
+plot(1:9, lco_d, type="b", ylim = c(-4,4), xlim = c(1,9), xlab="response for D", 
+     ylab="log-cumulative-odds for Moods (D)", xaxt="n", bty = "n")
+axis(1, seq(1,9,1))
+```
+
+So now we have a feeling for the response variables.
+
+# Prior sensitivity analysis
+
+Let's look at the priors now. Later below we'll do prior predictive checks.
+So for each linear model in our multivariate model we have the following priors:
+
+* mo(EDU) - Dirichlet prior (we set {2,2,2,2,2} which is very weak)
+* EXAMPLE_idx - N(0,1) times 10 factors. Means (1*10)^2 in variance
+* MAJOR_idx   - N(0,1) times 6 factors.
+* ROLE_idx    - N(0,1) times 5 factors.
+* LANG_idx    - N(0,1) times 10 factors.
+* ENTITIES    - N(0,1) 
+* EXP         - N(0,1)
+* ID_idx      - varying intercept
+
+We have basically this in our prior sensitivity analysis,
+```{r}
+N <- 100
+SD <- 0.5 # Changed to 0.1 and 1 also and 0.5 is definitely enough.
+intercept <- rnorm(N, 0, 1)
+Edu <- rdirichlet(n = N, alpha = c(2,2,2,2,2,2))
+Example1 <- rnorm(N, 0, SD)
+Example2 <- rnorm(N, 0, SD)
+Example3 <- rnorm(N, 0, SD)
+Example4 <- rnorm(N, 0, SD)
+Example5 <- rnorm(N, 0, SD)
+Example6 <- rnorm(N, 0, SD)
+Example7 <- rnorm(N, 0, SD)
+Example8 <- rnorm(N, 0, SD)
+Example9 <- rnorm(N, 0, SD)
+Example10 <- rnorm(N, 0, SD)
+Major1 <- rnorm(N, 0, SD)
+Major2 <- rnorm(N, 0, SD)
+Major3 <- rnorm(N, 0, SD)
+Major4 <- rnorm(N, 0, SD)
+Major5 <- rnorm(N, 0, SD)
+Major6 <- rnorm(N, 0, SD)
+Role1 <- rnorm(N, 0, SD)
+Role2 <- rnorm(N, 0, SD)
+Role3 <- rnorm(N, 0, SD)
+Role4 <- rnorm(N, 0, SD)
+Role5 <- rnorm(N, 0, SD)
+Lang1 <- rnorm(N, 0, SD)
+Lang2 <- rnorm(N, 0, SD)
+Lang3 <- rnorm(N, 0, SD)
+Lang4 <- rnorm(N, 0, SD)
+Lang5 <- rnorm(N, 0, SD)
+Lang6 <- rnorm(N, 0, SD)
+Lang7 <- rnorm(N, 0, SD)
+Lang8 <- rnorm(N, 0, SD)
+Lang9 <- rnorm(N, 0, SD)
+Lang10 <- rnorm(N, 0, SD)
+Entities1 <- rnorm(N, 0, SD)
+Entities2 <- rnorm(N, 0, SD)
+Entities3 <- rnorm(N, 0, SD)
+Entities4 <- rnorm(N, 0, SD)
+Entities5 <- rnorm(N, 0, SD)
+Entities6 <- rnorm(N, 0, SD)
+Entities7 <- rnorm(N, 0, SD)
+Exp <- rnorm(N, 0, SD)
+
+plot(NULL, xlim=c(-2,2), ylim=c(0,1)) 
+
+for(i in 1:N)
+  curve(inv_logit_scaled(intercept[i]*x + Edu[i]*x + Example1[i]*x + Example2[i]*x + 
+                           Example3[i]*x + Example4[i]*x + Example5[i]*x + 
+                           Example6[i]*x +Example7[i]*x + Example8[i]*x + 
+                           Example9[i]*x + Example10[i]*x +
+                           Major1[i]*x + Major2[i]*x + Major3[i]*x + 
+                           Major4[i]*x + Major5[i]*x + Major6[i]*x +
+                           Role1[i]*x + Role2[i]*x + Role3[i]*x + Role4[i]*x + 
+                           Role5[i]*x + 
+                           Lang1[i]*x + Lang2[i]*x + Lang3[i]*x + Lang4[i]*x + 
+                           Lang5[i]*x + Lang6[i]*x + Lang7[i]*x + Lang8[i]*x + 
+                           Lang9[i]*x + Lang10[i]*x + 
+                           Entities1[i]*x + Entities2[i]*x + Entities3[i]*x + 
+                           Entities4[i]*x + Entities5[i]*x + Entities6[i]*x + 
+                           Entities7[i]*x + Exp[i]*x), 
+        add=TRUE)
+```
+
+In short, the above shows how our combined priors look like in the probability space ($y$). Due to the gap in the middle one could say we are skeptical of any extreme curves around 0. In the end, prior predictive checks will allow us to investigate this on the outcome scale.
+
+Above we used a Dirichlet prior on ordered categorical data. The Dirichlet is a generalization of the Beta distribution, probability (0,1), but instead of having one probability being estimated using a Dirichlet prior, we can have many. How many depends on the number of categories $K$, which means we need to set the prior with $K-1$ parameters (the last category we can calculate from the previous category).
+
+If we plot different Dirichlet priors we might better understand what it does,
+```{r}
+x <- seq(0, 1, 0.001)
+
+p6 <- data.frame(x, y = dbeta(x, 6, 30)) %>%
+  ggplot(aes(x, y)) + geom_smooth(stat = "identity", size=0.25, col = "black") +
+  xlab("Dirichlet(6,6,6,6,6)") + ylab("") + coord_cartesian(ylim=c(0, 7)) +
+  theme_tufte()
+
+p4 <- data.frame(x, y = dbeta(x, 4, 20)) %>%
+  ggplot(aes(x, y)) + geom_smooth(stat = "identity", size=0.25, col = "black") +
+  xlab("Dirichlet(4,4,4,4,4)") + ylab("") + coord_cartesian(ylim=c(0, 7)) +
+  theme_tufte() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+p2 <-  data.frame(x, y = dbeta(x, 2, 10)) %>%
+  ggplot(aes(x, y)) + geom_smooth(stat = "identity", size=0.25, col = "black") +
+  xlab("Dirichlet(2,2,2,2,2)") + ylab("") + coord_cartesian(ylim=c(0, 7)) +
+  theme_tufte() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+p2 / p4 / p6
+```
+
+So all of the above are for estimating $6+1$ categories using $6$ parameters. It's evident that the higher numbers we set for our parameters ($2 \rightarrow 4 \rightarrow 6$) the more mass is on lower probabilities. Having 2's implies an almost flat prior, i.e., we really don't have any good prior knowledge on how this simplex would look like so this is it.
+
+# Model comparisons and prior predictive checks
+Since we have a cumulative likelihood we'll have a hard time using any principled ways of conducting variable selection. Luckily, in our case, we are really not interested in arriving to as small a set of predictors as possible. We use all predictors and instead we do model comparisons while adding them one by one.
+
+First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities. We will not run all models below but simply list them here for completeness.
+
+```{r mod_comp, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+m1 <- brm(mvbind(D,A,V) ~ mo(EDU) + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m2 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m3 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m4 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
+            (1|ID_idx),
+         data=dat, family=cumulative)
+
+m5 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
+            LANG_idx + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m6 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
+            LANG_idx + ENTITIES + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m7 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
+            LANG_idx + ENTITIES + EXP + (1|ID_idx),
+         data=dat, family=cumulative)
+
+m8 <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx +
+            LANG_idx + ENTITIES + EXP + (1|c|ID_idx),
+         data=dat, family=cumulative)
+```
+
+And here are our final priors and model $\mathcal{M}$, which we'll now run and sample only from the priors first. The model consists of all predictors, and in the case of EDU it's modeled as monotonic, i.e., ordered categorical with a Dirichlet prior. Additionally, for the varying intercept (ID_idx) we also model the correlation between our three outcomes $\{V,A,D\}$, the logic being that it's the same subject who's answered all question and thus it's likely that the answers are correlated. For the correlation we'll us the LKJ(2) prior (which can be considered a default prior for modeling correlations). The 2 in LKJ(2) implies that we are slightly skeptical of extreme correlations.
+
+First, set priors on our 136 parameters we want to estimate and then sample only from the priors. We set the Lewandowski-Kurowicka-Joe (LKJ) prior for our correlations, $\mathcal{N}(0, 0.3)$ on $\beta$, and $\mathcal{N}(0, 2.5)$ on $\alpha$ (since we have a cumulative model we have several $\alpha$, one for each border between responses, i.e., $9$ responses means $8$ $\alpha$). We have $\mathrm{Weibull}(2,1)$ as prior for modeling $\sigma$ (allowing only positive real numbers) and, finally, our Dirichlet prior on the predictor EDU, which is ordered categorical. We recommend you to change the priors and see how this affects the prior probability distribution.
+
+```{r M_prio, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+p <- get_prior(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
+                LANG_idx + ENTITIES + EXP + (1|c|ID_idx),
+               family = cumulative, data = dat)
+
+p$prior[2] <- "lkj(2)"
+p$prior[c(5,49,93)] <- "normal(0,0.3)"
+p$prior[c(36,80,124)] <- "normal(0,2.5)"
+p$prior[c(45,89,133)] <- "weibull(2,1)"
+p$prior[c(48,92,136)] <- "dirichlet(2,2,2,2,2)"
+
+M_prio <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
+                LANG_idx + ENTITIES + EXP + (1|c|ID_idx), prior = p, data=dat, 
+         family=cumulative, sample_prior = "only", seed = SEED)
+```
+
+Now plot our priors in the outcome scale,
+
+```{r cache=TRUE}
+pp_check(M_prio, type="bars", resp = "V", nsamples = 1000)
+```
+
+The $y$-axis are the counts while the $x$-axis are the Likert scale outcome for the response $V$. As we see, the medians for our prior samples ($y_{\mathrm{rep}}$) are evenly distributed and the credible intervals are wide (the bars are our empirical data $y$). This looks to be a good setup for our model. Now, let's use our data and sample,
+
+```{r M, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+M <- brm(mvbind(D,A,V) ~ mo(EDU) + EXAMPLE_idx + MAJOR_idx + ROLE_idx + 
+                LANG_idx + ENTITIES + EXP + (1|c|ID_idx), 
+         prior = p, data=dat, family=cumulative, seed = SEED)
+```
+
+# Diagnostics and posterior predictive checks
+A minimum of three diagnostics should preferably always be checked before one puts any trust in a model (and you should never trust a model completely...) First we can use `plot(M)` to visualize how well the chains have mixed (they should look like fat hairy caterpillar plots). We won't plot them here since they will take up a lot of space.
+
+Next we check $\widehat{R}$ to check the between- and within-variance of the chains. If all is well they should converge towards $1.0$ when $N \rightarrow \infty$. As a rule of thumb, if $\widehat{R} > 1.01$ it's an indication that the chains have not converged to a stationary posterior probability distribution.
+
+```{r}
+# the correlations give an NA, as they should so exclude it
+max(rhat(M), na.rm = TRUE) 
+```
+
+The effective sample size should be larger than $10$% of the total sample size,
+
+```{r}
+min(neff_ratio(M), na.rm = TRUE)
+```
+
+So, diagnostics look good. Let's als o do some posterior predictive checks.
+```{r}
+pp_check(M, type = "bars", resp = "V", nsamples = NULL)
+pp_check(M, type = "bars", resp = "A", nsamples = NULL)
+pp_check(M, type = "bars", resp = "D", nsamples = NULL)
+```
+
+According to `?ppc_bars`,
+> Rootograms allow for diagnosing problems in count data models such as overdispersion or excess zeros. They consist of a histogram of $y$ with the expected counts based on yrep overlaid as a line along with uncertainty intervals. The $y$-axis represents the square roots of the counts to approximately adjust for scale differences and thus ease comparison between observed and expected counts. 
+
+```{r}
+pp_check(M, resp="V", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
+pp_check(M, resp="A", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
+pp_check(M, resp="D", type="rootogram", nsamples=NULL, prob=0.89) + scale_x_discrete(limits=c(seq(1:9)))
+```
+
+# Computational environment
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
+
+# References
