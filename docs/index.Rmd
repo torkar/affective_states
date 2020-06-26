@@ -407,7 +407,7 @@ conditional_effects(M, effects = "EXP", resp = "A")
 conditional_effects(M, effects = "EXP", resp = "D")
 ```
 
-We could also set some fixed values for our covariates and see what this implies. Below we define a function to do jus that,
+We could also set some fixed values for our covariates and see what this implies. Below we define a function to do just that,
 ```{r}
 # Remember, our model had six fixed effects: 
 # EXAMPLE_idx, MAJOR_idx, ROLE_idx, LANG_idx, ENTITIES, and EXP
