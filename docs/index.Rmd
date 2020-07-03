@@ -673,8 +673,13 @@ ggplot(df, aes(x = Contrast,
 ```
 
 # Computational environment
-```{r session_info, include=TRUE, echo=TRUE, results='markup'}
-devtools::session_info()
+
+```{r}
+writeLines(readLines(file.path(Sys.getenv("HOME"), ".R/Makevars")))
+```
+
+```{r}
+sessionInfo()
 ```
 
 # References
