@@ -14,4 +14,6 @@ If you want to replicate the results from the replication package in an easy way
 docker run -d -p 8787:8787 -e PASSWORD=foo -e ROOT=TRUE torkar/docker_bda:affective_states
 ```
 
-Then point your browser to <http://localhost:8787>, enter `rstudio` as username and `foo` as password (change password above to whatever you want). In the browser you now have `RStudio`, and a first step would be to go (lower-right corner) to the directory `development/affectice_states/` and click on the project file `Jesper & Erik.Rproj`, and start looking around. Perhaps open the file `docs/index.Rmd` which you then can `knit`, i.e., re-run, to get the output `index.html` (which is also published at <https://torkar.github.io/affective_states/>).
+Then point your browser to <http://localhost:8787>, enter `rstudio` as username and `foo` as password (change password above to whatever you want). In the browser you now have `RStudio`, and a first step would be to go (lower-right corner) to the directory `development/affective_states/` and click on the project file `Jesper & Erik.Rproj`, to load the project.
+
+Next, perhaps open the file `docs/index.Rmd` which you then can `knit`, i.e., re-run analysis and generate the output `index.html` (which, as previously stated, is also published at <https://torkar.github.io/affective_states/>).
