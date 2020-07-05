@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/224837204.svg)](https://zenodo.org/badge/latestdoi/224837204)
+
 # Replication package for the manuscript *Measuring affective states from technical debt*
 
 * All artifacts used for the experiment can be found in `artifacts/`. In `artifacts/README.md` you find more information about the content.
