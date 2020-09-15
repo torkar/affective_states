@@ -244,7 +244,7 @@ So all of the above are for estimating $5+1$ categories using $5$ parameters. It
 # Model comparisons and prior predictive checks
 Since we use the cumulative likelihood we'll have a hard time using any principled ways of conducting variable selection. Luckily, in our case, we are really not interested in arriving to as small a set of predictors as possible. Hence, we use all predictors and instead do model comparisons while adding them one by one.
 
-First, we executed one model at a time, and then we used LOO to compare their relative out of sampled predictions capabilities [@vehtariGG17loo].
+First, we execute one model at a time (using default priors only), and then we use LOO to compare their relative out of sampled predictions capabilities [@vehtariGG17loo].
 
 ```{r mod_comp, cache=TRUE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 m1 <- brm(mvbind(D,A,V) ~ mo(EDU) + (1|ID_idx),
@@ -390,17 +390,19 @@ The dark densities are the estimated standard deviations. We can see that they d
 
 # Inference
 
-In the manuscript we report $95$% credible intervals, but here we can take the opportunity and do it properly and look at $89$% credible intervals. After all, $89$ is at least a prime number$\ldots$
+In the manuscript we report $95$% credible intervals. The following parameters were significant on the $95$%-level:
 
-The following parameters were significant on the $89$%-level:
-
-* Outcome $V$, covariate EXPERIENCE
 * Outcome $V$, covariate EXAMPLE DL
 * Outcome $V$, covariate EXAMPLE CL
 * Outcome $V$, covariate EXAMPLE BH 
 * Outcome $D$, covariate EXAMPLE BL
 
+Additionally, we wanted to examine Experience's effect:
+
+* Outcome $V$, covariate EXPERIENCE
+
 Let's plot Experience as a conditional effect (for all three of the outcomes $\{V,A,D\}$), i.e., keep all covariates at their mean, or the reference level for categorical covariates, and vary only Experience (as we do in the manuscript).
+
 ```{r ce, warning=FALSE, message=FALSE}
 conditional_effects(M, effects = "EXP", resp = "V")
 conditional_effects(M, effects = "EXP", resp = "A")
@@ -564,6 +566,7 @@ Even though it might feel unnecessary to conduct hypothesis testing, many reader
 Below follows the code for the plots in the manuscript,
 
 ```{r}
+# First V
 A <- hypothesis(M, "V_EXAMPLE_idxAL < 0", class = "b")
 B <- hypothesis(M, "V_EXAMPLE_idxBL < V_EXAMPLE_idxBH", class = "b")
 C <- hypothesis(M, "V_EXAMPLE_idxCL < V_EXAMPLE_idxCH", class = "b")
