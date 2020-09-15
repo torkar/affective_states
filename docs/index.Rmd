@@ -586,19 +586,19 @@ ggplot(df, aes(x = Contrast,
   ylab("Hypotheses") +
   geom_vline(xintercept = 0, size = 0.2) +
   annotate("text", x = 1.2, y = 'D', 
-           label = deparse(bquote("Strong evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Strong evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'A', 
-           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Strong evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'B', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'E', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[0])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'C', 
-           label = deparse(bquote("Moderate evidence for"~italic(H)[0])), 
+           label = deparse(bquote("Strong evi. for"~italic(H)[0])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   theme_tufte()
 
@@ -615,26 +615,26 @@ df <- data.frame(A=A$samples$H1, B=B$samples$H1, C=C$samples$H1,
 df <- gather(df, 'A', 'B', 'C', 'D', 'E', key = "Category", value = "Contrast")
 
 ggplot(df, aes(x = Contrast, 
-               y = fct_relevel(Category, levels = "D", "B", "E", "C", "A"))) +
+               y = fct_relevel(Category, levels = "D", "B", "E", "A", "C"))) +
   geom_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.975),
                       scale = 2, rel_min_height = 0.01, show.legend = FALSE, 
                       alpha = 0.7) +
   ylab("Hypotheses") +
   geom_vline(xintercept = 0, size = 0.2) +
   annotate("text", x = -2.6, y = 'D', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[0])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'A', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'B', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[0])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[0])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'E', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   annotate("text", x = -2.6, y = 'C', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   theme_tufte()
 
@@ -658,19 +658,19 @@ ggplot(df, aes(x = Contrast,
   ylab("Hypotheses") +
   geom_vline(xintercept = 0, size = 0.2) +
   annotate("text", x = -1.3, y = 'D', 
-           label = deparse(bquote("Strong evidence for"~italic(H)[0])), 
+           label = deparse(bquote("Moderate evi. for"~italic(H)[0])), 
            parse = TRUE, hjust = "right", family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'A', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'B', 
-           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Moderate evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = 0, family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'E', 
-           label = deparse(bquote("Anecdotal evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Anecdotal evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   annotate("text", x = 1.2, y = 'C', 
-           label = deparse(bquote("Moderate evidence for"~italic(H)[1])), 
+           label = deparse(bquote("Moderate evi. for"~italic(H)[1])), 
            parse = TRUE, hjust = "left", family = "serif", size=2) +
   theme_tufte()
 ```
